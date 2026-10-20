@@ -1,0 +1,620 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px/1.4 system-ui,-apple-system,"Segoe UI",sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
+</head>
+<body>
+<title>Sammy House Fund</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;800&family=Public+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* Layout: purple chapter band with totals, then one ledger section per category; add/edit form in a slide-over panel */
+:root {
+  --bg: #f6f4fa;
+  --surface: #ffffff;
+  --ink: #1e1830;
+  --muted: #6b6480;
+  --line: #e2ddec;
+  --accent: #5b2a9e;
+  --accent-ink: #ffffff;
+  --gold: #b8892b;
+  --band: #3d1a6e;
+  --band-ink: #f3edfc;
+  --track: #ebe5f5;
+  --ok: #1f7a4d; --ok-bg: #e2f3ea;
+  --warn: #8a5a00; --warn-bg: #fbf0d9;
+  --idle: #5f5873; --idle-bg: #eeebf3;
+  --danger: #b3261e;
+  --display: "Big Shoulders Display", "Arial Narrow", Impact, sans-serif;
+  --body: "Public Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #15111f; --surface: #1e1930; --ink: #ece8f5; --muted: #a49cba; --line: #322b47;
+  --accent: #a77de8; --accent-ink: #15111f; --gold: #d9ae55; --band: #2a1450; --band-ink: #f3edfc;
+  --track: #2c2541; --ok: #6fd3a0; --ok-bg: #173527; --warn: #f0c46a; --warn-bg: #3a2c10;
+  --idle: #b8b0cc; --idle-bg: #2a2440; --danger: #ff8a80; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #15111f; --surface: #1e1930; --ink: #ece8f5; --muted: #a49cba; --line: #322b47;
+  --accent: #a77de8; --accent-ink: #15111f; --gold: #d9ae55; --band: #2a1450; --band-ink: #f3edfc;
+  --track: #2c2541; --ok: #6fd3a0; --ok-bg: #173527; --warn: #f0c46a; --warn-bg: #3a2c10;
+  --idle: #b8b0cc; --idle-bg: #2a2440; --danger: #ff8a80; color-scheme: dark }
+
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 15px; line-height: 1.5; }
+.wrap { max-width: 1040px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+button, input, select, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+.num { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+
+/* Band */
+.band { background: var(--band); color: var(--band-ink); }
+.band .wrap { padding-block: 28px 24px; display: grid; gap: 20px; }
+.crest { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; }
+.greek { font-family: var(--display); font-weight: 800; font-size: 56px; line-height: 0.9; letter-spacing: 0.04em; color: var(--gold); }
+.crest h1 { font-family: var(--display); font-weight: 800; font-size: 34px; line-height: 1; margin: 0; text-transform: uppercase; letter-spacing: 0.02em; text-wrap: balance; }
+.crest p { margin: 0; flex-basis: 100%; opacity: 0.8; font-size: 14px; }
+.mode-tag { align-self: center; font-size: 11px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; padding: 4px 9px; border-radius: 4px; background: var(--gold); color: var(--band); }
+.totals { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px 24px; align-items: end; }
+.stat .label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.12em; opacity: 0.75; }
+.stat .value { font-family: var(--display); font-weight: 800; font-size: 34px; line-height: 1.05; font-variant-numeric: tabular-nums; }
+.bigbar { grid-column: 1 / -1; height: 10px; border-radius: 99px; background: rgba(255,255,255,0.15); overflow: hidden; display: flex; }
+.bigbar span { display: block; height: 100%; }
+.seg-rec { background: var(--gold); }
+.seg-pl { background: rgba(217,174,85,0.45); }
+.legend { grid-column: 1 / -1; display: flex; gap: 16px; font-size: 12px; opacity: 0.85; flex-wrap: wrap; }
+.legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 6px; vertical-align: -1px; }
+
+/* Toolbar */
+.toolbar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--bg); border-bottom: 1px solid var(--line); }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--band); }
+.toolbar .wrap { padding-block: 12px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+.chips { display: flex; gap: 6px; flex-wrap: wrap; flex: 1; min-width: 0; }
+.chip { border: 1px solid var(--line); background: var(--surface); border-radius: 99px; padding: 5px 12px; font-size: 13px; font-weight: 500; }
+.chip[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.btn { border: 0; border-radius: 8px; padding: 9px 16px; font-weight: 600; background: var(--accent); color: var(--accent-ink); }
+.btn.ghost { background: transparent; color: var(--ink); border: 1px solid var(--line); }
+.btn.danger { background: var(--danger); color: #fff; }
+.btn:disabled { opacity: 0.5; cursor: default; }
+
+/* Sections */
+main .wrap { padding-block: 24px 64px; display: grid; gap: 28px; }
+.cat-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 10px; }
+.cat-head h2 { font-family: var(--display); font-weight: 800; text-transform: uppercase; font-size: 28px; letter-spacing: 0.02em; margin: 0; line-height: 1; }
+.cat-head .meta { font-size: 13px; color: var(--muted); }
+.bar { height: 6px; border-radius: 99px; background: var(--track); display: flex; overflow: hidden; margin-bottom: 12px; }
+.bar .r { background: var(--accent); }
+.bar .p { background: var(--accent); opacity: 0.4; }
+.ledger { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+.row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px 16px; padding: 14px 16px; border-top: 1px solid var(--line); }
+.row:first-child { border-top: 0; }
+.row .name { font-weight: 600; min-width: 0; overflow-wrap: anywhere; }
+.row .name a { color: inherit; text-decoration-color: var(--line); text-underline-offset: 3px; }
+.row .sub { grid-column: 1 / 2; font-size: 13px; color: var(--muted); display: flex; gap: 6px 14px; flex-wrap: wrap; min-width: 0; }
+.row .sub .note { flex-basis: 100%; overflow-wrap: anywhere; }
+.row .right { grid-row: 1 / span 2; grid-column: 2; display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
+.row .price { font-family: var(--mono); font-variant-numeric: tabular-nums; font-size: 15px; }
+.pill { font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; padding: 3px 8px; border-radius: 4px; }
+.pill.needed { color: var(--idle); background: var(--idle-bg); }
+.pill.pledged { color: var(--warn); background: var(--warn-bg); }
+.pill.received { color: var(--ok); background: var(--ok-bg); }
+.row .acts { display: flex; gap: 4px; }
+.link-btn { background: none; border: 0; color: var(--accent); font-size: 13px; font-weight: 600; padding: 2px 4px; }
+.pill.cash { color: var(--accent); background: var(--track); }
+.fund-head { padding: 8px 16px; border-top: 1px solid var(--line); background: var(--bg); font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); display: flex; justify-content: space-between; gap: 12px; }
+.row.fund .name { font-weight: 500; }
+.row .price.plus { color: var(--ok); }
+.raised { flex-basis: 100%; display: flex; align-items: center; gap: 8px; }
+.raised .mini { flex: 0 1 120px; height: 4px; border-radius: 99px; background: var(--track); overflow: hidden; }
+.raised .mini span { display: block; height: 100%; background: var(--ok); }
+.pubstate { font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 8px; }
+.pubstate .link-btn { padding: 0; }
+.empty { padding: 18px 16px; color: var(--muted); font-size: 14px; }
+.status-line { color: var(--muted); font-size: 14px; }
+
+/* Panel */
+.scrim { position: fixed; inset: 0; background: rgba(15,10,25,0.45); z-index: 20; }
+.panel { position: fixed; top: 0; right: 0; bottom: 0; width: min(440px, 100%); background: var(--surface); z-index: 21; overflow-y: auto;
+  padding: calc(20px + env(safe-area-inset-top, 0px)) max(20px, env(safe-area-inset-right, 0px)) calc(20px + env(safe-area-inset-bottom, 0px)) 20px;
+  box-shadow: -12px 0 40px rgba(0,0,0,0.2); }
+.panel h3 { font-family: var(--display); font-weight: 800; text-transform: uppercase; font-size: 26px; margin: 0 0 16px; }
+form { display: grid; gap: 14px; }
+.field { display: grid; gap: 5px; }
+.field label { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+.field input, .field select, .field textarea { width: 100%; padding: 9px 11px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); }
+.field textarea { min-height: 70px; resize: vertical; }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.form-acts { display: flex; gap: 8px; justify-content: space-between; flex-wrap: wrap; margin-top: 4px; }
+.form-acts .right { display: flex; gap: 8px; }
+.hint { font-size: 12px; color: var(--muted); min-height: 0; }
+.hint:empty { display: none; }
+.hint b { color: var(--ok); font-weight: 600; }
+.err { color: var(--danger); font-size: 13px; min-height: 1em; }
+.toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(20px + env(safe-area-inset-bottom, 0px)); background: var(--ink); color: var(--bg); padding: 10px 16px; border-radius: 8px; font-size: 14px; z-index: 30; }
+
+@media (max-width: 520px) {
+  .greek { font-size: 44px; }
+  .crest h1 { font-size: 28px; }
+  .stat .value { font-size: 28px; }
+  .two { grid-template-columns: 1fr; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .bar span, .bigbar span { transition: width 0.4s ease; }
+}
+</style>
+
+<header class="band">
+  <div class="wrap">
+    <div class="crest">
+      <span class="greek" aria-hidden="true">ΣΑΜ</span>
+      <h1>House Fund</h1>
+      <span class="mode-tag" id="mode-tag" hidden></span>
+      <p>Sigma Alpha Mu donation tracker. Log what the house needs, who pledged it, and what has arrived.</p>
+    </div>
+    <div class="totals">
+      <div class="stat"><div class="label">Wishlist total</div><div class="value" id="t-goal">$0</div></div>
+      <div class="stat"><div class="label">Received</div><div class="value" id="t-rec">$0</div></div>
+      <div class="stat"><div class="label">Pledged</div><div class="value" id="t-pl">$0</div></div>
+      <div class="stat"><div class="label">Still needed</div><div class="value" id="t-left">$0</div></div>
+      <div class="bigbar" aria-hidden="true"><span class="seg-rec" id="b-rec" style="width:0"></span><span class="seg-pl" id="b-pl" style="width:0"></span></div>
+      <div class="legend"><span><i class="seg-rec"></i>Received</span><span><i class="seg-pl"></i>Pledged</span><span id="t-count"></span><span id="t-updated"></span></div>
+    </div>
+  </div>
+</header>
+
+<div class="toolbar">
+  <div class="wrap">
+    <div class="chips" id="chips" role="group" aria-label="Filter by category"></div>
+    <span class="pubstate" id="pub-state" hidden></span>
+    <button class="btn ghost" id="fund-btn" type="button" hidden>+ Add funds</button>
+    <button class="btn" id="add-btn" type="button" hidden>+ Add item</button>
+  </div>
+</div>
+
+<main><div class="wrap" id="sections"><p class="status-line" id="status">Loading donations…</p></div></main>
+
+<div class="scrim" id="scrim" hidden></div>
+<aside class="panel" id="panel" hidden aria-labelledby="panel-title" role="dialog">
+  <h3 id="panel-title">Add item</h3>
+  <form id="form" novalidate>
+    <div class="field"><label for="f-name">Item</label><input id="f-name" required placeholder='e.g. Insignia 75" Fire TV'></div>
+    <div class="two">
+      <div class="field"><label for="f-cat">Category</label><select id="f-cat"></select></div>
+      <div class="field"><label for="f-status">Status</label>
+        <select id="f-status"><option value="needed">Needed</option><option value="pledged">Pledged</option><option value="received">Received</option></select></div>
+    </div>
+    <div class="two">
+      <div class="field"><label for="f-est">Est. cost ($)</label><input id="f-est" inputmode="decimal" placeholder="599"></div>
+      <div class="field"><label for="f-amt">Donated value ($)</label><input id="f-amt" inputmode="decimal" placeholder="Leave blank = est."></div>
+    </div>
+    <div class="field"><label for="f-donor">Donor</label><input id="f-donor" placeholder="Alum, parent, or brother"></div>
+    <div class="field"><label for="f-link">Product link</label><input id="f-link" type="url" placeholder="Paste an Amazon, Walmart, Home Depot… link"><div class="hint" id="f-link-hint" aria-live="polite"></div></div>
+    <div class="field"><label for="f-notes">Notes</label><textarea id="f-notes" placeholder="Size, color, delivery date, contact…"></textarea></div>
+    <div class="err" id="f-err" role="alert"></div>
+    <div class="form-acts">
+      <button type="button" class="btn ghost" id="del-btn" hidden>Delete</button>
+      <div class="right">
+        <button type="button" class="btn ghost" id="cancel-btn">Cancel</button>
+        <button type="submit" class="btn" id="save-btn">Save</button>
+      </div>
+    </div>
+  </form>
+</aside>
+<aside class="panel" id="fpanel" hidden aria-labelledby="fpanel-title" role="dialog">
+  <h3 id="fpanel-title">Add funds</h3>
+  <form id="fform" novalidate>
+    <div class="two">
+      <div class="field"><label for="g-amt">Amount ($)</label><input id="g-amt" inputmode="decimal" placeholder="50"></div>
+      <div class="field"><label for="g-date">Date received</label><input id="g-date" type="date"></div>
+    </div>
+    <div class="field"><label for="g-cat">Put toward category</label><select id="g-cat"></select></div>
+    <div class="field"><label for="g-item">Specific item (optional)</label><select id="g-item"></select></div>
+    <div class="field"><label for="g-donor">From</label><input id="g-donor" placeholder="Who gave it"></div>
+    <div class="field"><label for="g-notes">Notes</label><input id="g-notes" placeholder="Venmo, check, cash…"></div>
+    <div class="err" id="g-err" role="alert"></div>
+    <div class="form-acts">
+      <button type="button" class="btn ghost" id="gdel-btn" hidden>Delete</button>
+      <div class="right">
+        <button type="button" class="btn ghost" id="gcancel-btn">Cancel</button>
+        <button type="submit" class="btn" id="gsave-btn">Save</button>
+      </div>
+    </div>
+  </form>
+</aside>
+<div class="toast" id="toast" hidden></div>
+
+<script type="application/json" id="snapshot">{"items":[{"id":"4y1b2ac9thw7x8qjtidp","amount":null,"category":"tvs","createdAt":1792528550839,"donor":"","est":350,"link":"","name":"TV4","notes":"","status":"needed","updatedAt":1792530520308},{"id":"8j1z32kwbi99ekyitbxb","amount":null,"category":"pool","createdAt":1792529962663,"donor":"","est":250,"link":"https://www.amazon.com/JOOLA-Conversion-Table-Tennis-Backing/dp/B00D9QR7TY/ref=sr_1_5?crid=4ITPR5Z48CTI&dib=eyJ2IjoiMSJ9.Y6C2x9vJ06qn46fauUMPF9zE7hOQMOD4bXUihqjy2YEUPR0z8QmvjycWHjUBYN9lXthSLE2b95SVQVu4ZYO50ByxRhWc1vmY71DylGofGol2FzDHGhC-ifOkUKC55SxHC39yKeswMdeASsxPCTY01P_hLt2CT3qS91MpqP0Z4oN9pnlZHa_Vx6uniQbvbQTCQ_TWMATn9t8ig5JKptssiTi84XUJSrjv7RA1giS1nbgl0aImbt71resB_G1JCK-zAz8XTUEYgzQq4KDY0fJUZwShUPJIvbcqpKDNiRSHJHQ.nDqkCtdF0oPmPjwHvFmtRaZ-9gFeL3vPKyrCVDCsQdk&dib_tag=se&keywords=ping+pong+cover+for+pool+table&qid=1792529384&sprefix=ping+pong+voer+for+pool+%2Caps%2C139&sr=8-5","name":"JOOLA Conversion Table Tennis Backing","notes":"","status":"needed","updatedAt":1792529962663},{"id":"danmwvkj66osjji11hu8","amount":null,"category":"tvs","createdAt":1792528553916,"donor":"","est":350,"link":"","name":"tv5","notes":"","status":"needed","updatedAt":1792530524394},{"id":"grill-blackstone-36","amount":null,"category":"grills","createdAt":1792527100003,"donor":"","est":400,"link":"","name":"Blackstone 36 in. 4-Burner Omnivore Griddle","notes":"","status":"needed","updatedAt":1792527100003},{"id":"misc-sauna","amount":null,"category":"misc","createdAt":1792527100009,"donor":"","est":0,"link":"","name":"Low EMF Infrared Sauna, 2–3 person (Hemlock)","notes":"Typical $1,650. $299 delivery.","status":"needed","updatedAt":1792530781700},{"id":"mtj8fqnyr63oysgtq86u","amount":null,"category":"outdoor","createdAt":1792530335273,"donor":"","est":800,"link":"https://www.amazon.com/Furniture-Outdoor-Anti-Slip-Cushions-Waterproof/dp/B0CJRRSDBH/ref=sr_1_2_sspa?dib=eyJ2IjoiMSJ9.qs75OONi0R1iSk9jMRQ3qyyR8KXSTdkCrkmg4stZOzf6i9B-m-9qy0Twb87OiJQFjHq6aaUltzyZZ-nvoqF-WBRuXbYEYg0gO5Fz7wiuG6HFjWwzaDerGI_7T6dMexq1tR3bmzXWFXd1DY-45xUMf45YNzc_HbHC29-ZqYLQtea1vI0SXsHet-M2GuOeX5BfFMu2kALN79ScqV0rQKn9KmvlWErovgWOFUkVVoDz0RyaMoSyujEOIo6f7DBIkJ744DDGPm3i8FdOqeyWFiLYm0pfz6N9XYw8aA3Mlb7WcxQ.VD_LH7IAYax2Y9UjFe-wmn2T3sArcmTwZmkD9XoPJRA&dib_tag=se&hvadid=815868821462&hvdev=c&hvexpln=67&hvlocphy=9028280&hvnetw=g&hvocijid=8324289712976521885--&hvqmt=b&hvrand=8324289712976521885&hvtargid=kwd-295751069176&hydadcr=22095_13772782&keywords=clearance+outdoor+patio+furniture&mcid=c78403af3b7536ac85422d79258e9c07&qid=1792530281&sr=8-2-spons&sp_csd=d2lkZ2V0TmFtZT1zcF9hdGY&psc=1","name":"Furniture Outdoor Anti Slip Cushions Waterproof","notes":"","status":"needed","updatedAt":1792530335273},{"id":"ne7xzu13erdsnp44rtk8","amount":null,"category":"tvs","createdAt":1792528543855,"donor":"","est":350,"link":"","name":"TV3","notes":"","status":"needed","updatedAt":1792530515683},{"id":"pool-barrington","amount":null,"category":"pool","createdAt":1792527100004,"donor":"","est":700,"link":"","name":"Barrington Billiards 7.5 ft Pool Table Set with Cue Rack & Dartboard (Tan)","notes":"Walmart, $599 (was $999.99). Free shipping to Austin 78703.","status":"needed","updatedAt":1792530971986},{"id":"pool-bolts","amount":null,"category":"pool","createdAt":1792527100007,"donor":"","est":20,"link":"","name":"Bolts, washers, and locknuts","notes":"Estimated $10–20.","status":"needed","updatedAt":1792527100007},{"id":"pool-brackets","amount":null,"category":"pool","createdAt":1792527100006,"donor":"","est":100,"link":"","name":"Steel mounting brackets or reinforced mounting frame (x4)","notes":"Estimated $40–100+. Structural mounting points for the casters.","status":"needed","updatedAt":1792527100006},{"id":"pool-padding","amount":null,"category":"pool","createdAt":1792527100008,"donor":"","est":15,"link":"","name":"Rubber padding / protective spacers","notes":"Estimated $5–15, if needed.","status":"needed","updatedAt":1792527100008},{"id":"pool-wen-casters","amount":null,"category":"pool","createdAt":1792527100005,"donor":"","est":42.06,"link":"","name":"WEN Retractable Workbench Casters, 3-inch wheels","notes":"Walmart. 800 lb rating; lift the table to roll it, lower it to play.","status":"needed","updatedAt":1792527100005},{"id":"q01n8hhpray116plnjsw","amount":null,"category":"tvs","createdAt":1792528536538,"donor":"","est":350,"link":"","name":"TV2","notes":"","status":"needed","updatedAt":1792530509750},{"id":"rhpv8dl9wne2y5wllc0j","amount":null,"category":"outdoor","createdAt":1792530598069,"donor":"","est":830,"link":"https://www.amazon.com/SERWALL-Outdoor-Dining-Set-Armchairs/dp/B0GYCTQ98B/ref=sxin_16_sbv_search_btf?aref=E9NIJ1OP4g&content-id=amzn1.sym.48551238-add4-4aa5-b76d-9f01a49ca0eb%3Aamzn1.sym.48551238-add4-4aa5-b76d-9f01a49ca0eb&crid=2QQK1R0PQL61N&cv_ct_cx=high%2Btable%2Boutdoor%2Bfuniture&keywords=high%2Btable%2Boutdoor%2Bfuniture&pd_rd_i=B0GKNQZVYQ&pd_rd_r=d087ada5-d52c-4b2f-9c5c-8c8cf98ce28d&pd_rd_w=Saeb4&pd_rd_wg=ZlGqA&pf_rd_p=48551238-add4-4aa5-b76d-9f01a49ca0eb&pf_rd_r=4AW9PGQN26031MY23JAD&qid=1792530545&sbo=RZvfv%2F%2FHxDF%2BO5021pAnSA%3D%3D&sprefix=high%2Btable%2Boutdoor%2Bfuniture%2B%2Caps%2C191&sr=1-1-9634760c-6951-42cd-a9a5-afc46d7935cc&th=1","name":"SERWALL Outdoor Dining Set Armchairs","notes":"","status":"needed","updatedAt":1792530598069},{"id":"tv-insignia-75","amount":null,"category":"tvs","createdAt":1792527100001,"donor":"","est":350,"link":"","name":"TV1 - INSIGNIA 75\" Class F50 4K UHD Smart Fire TV","notes":"Estimate from your notes: $1,200+","status":"needed","updatedAt":1792530502769},{"id":"tv-wall-mounts","amount":null,"category":"tvs","createdAt":1792527100002,"donor":"","est":150,"link":"https://www.target.com/p/pipishell-full-motion-tv-wall-mount-bracket-for-26-55-led-lcd-tvs-articulating-arms-swivels-tilts-max-vesa-400x400mm-supports-up-to-66-lbs/-/A-1012023863#lnk=sametab","name":"TV wall mounts","notes":"","status":"needed","updatedAt":1792529235625}],"funds":[{"id":"yf4rwyp7ljil40ajeq40","amount":250,"category":"tvs","createdAt":1792528138502,"date":"2026-10-20","donor":"Litts mom","itemId":null,"notes":"Zelle","updatedAt":1792528160103}],"at":1792531082448}</script>
+<script>
+const CATS = [
+  { id: "tvs", label: "TVs" },
+  { id: "grills", label: "Grills" },
+  { id: "pool", label: "Pool Table" },
+  { id: "outdoor", label: "Outdoor Furniture" },
+  { id: "misc", label: "Extra if goal is met" },
+];
+const STATUS_LABEL = { needed: "Needed", pledged: "Pledged", received: "Received" };
+const $ = (id) => document.getElementById(id);
+const money = (n) => "$" + Math.round(n || 0).toLocaleString("en-US");
+const money2 = (n) => "$" + (n || 0).toLocaleString("en-US", { minimumFractionDigits: n % 1 ? 2 : 0, maximumFractionDigits: 2 });
+
+let items = [];
+let funds = [];
+let fcol = null, editingFundId = null, confirmFundDel = false;
+let filter = "all";
+const sumFunds = (pred) => funds.filter(pred).reduce((s, f) => s + (f.amount || 0), 0);
+const fmtDate = (d) => { if (!d) return ""; const [y, m, dd] = d.split("-").map(Number); return new Date(y, m - 1, dd).toLocaleDateString("en-US", { month: "short", day: "numeric" }); };
+let db = null, col = null, canWrite = true, editingId = null, confirmDel = false;
+
+try { const f = localStorage.getItem("sam-filter"); if (f) filter = f; } catch (e) {}
+
+function renderChips() {
+  const opts = [{ id: "all", label: "All" }, ...CATS];
+  $("chips").innerHTML = "";
+  opts.forEach(c => {
+    const b = document.createElement("button");
+    b.type = "button"; b.className = "chip"; b.textContent = c.label;
+    b.setAttribute("aria-pressed", String(filter === c.id));
+    b.onclick = () => { filter = c.id; try { localStorage.setItem("sam-filter", filter); } catch (e) {} renderChips(); render(); };
+    $("chips").appendChild(b);
+  });
+}
+$("f-cat").innerHTML = CATS.map(c => `<option value="${c.id}">${c.label}</option>`).join("");
+
+function value(it) { return typeof it.amount === "number" && it.amount > 0 ? it.amount : (it.est || 0); }
+
+function render() {
+  // totals
+  let goal = 0, rec = 0, pl = 0;
+  items.forEach(it => {
+    goal += it.est || 0;
+    if (it.status === "received") rec += value(it);
+    else if (it.status === "pledged") pl += value(it);
+  });
+  rec += sumFunds(() => true);
+  const left = Math.max(0, goal - rec - pl);
+  $("t-goal").textContent = money(goal); $("t-rec").textContent = money(rec);
+  $("t-pl").textContent = money(pl); $("t-left").textContent = money(left);
+  const pct = (x) => goal ? Math.min(100, x / goal * 100) + "%" : "0";
+  $("b-rec").style.width = pct(rec); $("b-pl").style.width = pct(pl);
+  const got = items.filter(i => i.status !== "needed").length;
+  $("t-count").textContent = `${got} of ${items.length} items covered`;
+
+  const host = $("sections");
+  host.innerHTML = "";
+  CATS.filter(c => filter === "all" || filter === c.id).forEach(c => {
+    const list = items.filter(i => i.category === c.id)
+      .sort((a, b) => ({ needed: 0, pledged: 1, received: 2 }[a.status] - { needed: 0, pledged: 1, received: 2 }[b.status]) || (a.createdAt || 0) - (b.createdAt || 0));
+    let g = 0, r = 0, p = 0;
+    list.forEach(it => { g += it.est || 0; if (it.status === "received") r += value(it); else if (it.status === "pledged") p += value(it); });
+    const catFunds = funds.filter(f => f.category === c.id).sort((a, b) => (b.date || "").localeCompare(a.date || "") || (b.createdAt || 0) - (a.createdAt || 0));
+    const cashTotal = catFunds.reduce((s, f) => s + (f.amount || 0), 0);
+    r += cashTotal;
+    const sec = document.createElement("section");
+    sec.setAttribute("aria-labelledby", "h-" + c.id);
+    sec.innerHTML = `
+      <div class="cat-head"><h2 id="h-${c.id}"></h2><div class="meta num"></div></div>
+      <div class="bar" aria-hidden="true"><span class="r" style="width:${g ? Math.min(100, r / g * 100) : 0}%"></span><span class="p" style="width:${g ? Math.min(100, p / g * 100) : 0}%"></span></div>
+      <div class="ledger"></div>`;
+    sec.querySelector("h2").textContent = c.label;
+    sec.querySelector(".meta").textContent = list.length ? `${money(r + p)} of ${money(g)} covered` : "No items yet";
+    const led = sec.querySelector(".ledger");
+    if (!list.length && !catFunds.length) {
+      const e = document.createElement("div"); e.className = "empty";
+      e.textContent = canWrite ? `Nothing logged for ${c.label.toLowerCase()} yet. Use “Add item” to put the first one on the list.` : `Nothing logged for ${c.label.toLowerCase()} yet.`;
+      led.appendChild(e);
+    }
+    list.forEach(it => led.appendChild(rowEl(it)));
+    if (catFunds.length) {
+      const h = document.createElement("div"); h.className = "fund-head";
+      h.innerHTML = `<span>Funds received</span><span class="num"></span>`;
+      h.querySelector(".num").textContent = money2(cashTotal);
+      led.appendChild(h);
+      catFunds.forEach(f => led.appendChild(fundRowEl(f)));
+    }
+    host.appendChild(sec);
+  });
+}
+
+function rowEl(it) {
+  const row = document.createElement("div"); row.className = "row";
+  const name = document.createElement("div"); name.className = "name";
+  if (it.link && /^https?:\/\//i.test(it.link)) {
+    const a = document.createElement("a"); a.href = it.link; a.target = "_blank"; a.rel = "noopener"; a.textContent = it.name; name.appendChild(a);
+  } else name.textContent = it.name;
+  const sub = document.createElement("div"); sub.className = "sub";
+  const add = (t, cls) => { const s = document.createElement("span"); if (cls) s.className = cls; s.textContent = t; sub.appendChild(s); };
+  if (it.donor) add((it.status === "received" ? "Donated by " : it.status === "pledged" ? "Pledged by " : "Donor: ") + it.donor);
+  if (it.status !== "needed" && typeof it.amount === "number" && it.amount > 0 && it.amount !== it.est) add("Value " + money2(it.amount));
+  const raised = sumFunds(f => f.itemId === it.id);
+  if (raised > 0) {
+    const r = document.createElement("span"); r.className = "raised";
+    const pct = it.est ? Math.min(100, raised / it.est * 100) : 100;
+    r.innerHTML = `<span class="mini"><span style="width:${pct}%"></span></span><span class="num"></span>`;
+    r.querySelector(".num").textContent = it.est ? `${money2(raised)} of ${money2(it.est)} raised` : `${money2(raised)} raised`;
+    sub.appendChild(r);
+  }
+  if (it.notes) add(it.notes, "note");
+  const right = document.createElement("div"); right.className = "right";
+  right.innerHTML = `<span class="price num"></span><span class="pill ${it.status}"></span>`;
+  right.querySelector(".price").textContent = it.est ? money2(it.est) : "—";
+  right.querySelector(".pill").textContent = STATUS_LABEL[it.status] || it.status;
+  if (canWrite && db) {
+    const acts = document.createElement("div"); acts.className = "acts";
+    const e = document.createElement("button"); e.type = "button"; e.className = "link-btn"; e.textContent = "Edit";
+    e.setAttribute("aria-label", "Edit " + it.name); e.onclick = () => openPanel(it);
+    acts.appendChild(e); right.appendChild(acts);
+  }
+  row.append(name, right, sub);
+  return row;
+}
+
+function fundRowEl(f) {
+  const row = document.createElement("div"); row.className = "row fund";
+  const name = document.createElement("div"); name.className = "name";
+  const item = f.itemId ? items.find(i => i.id === f.itemId) : null;
+  name.textContent = (f.donor || "Anonymous") + (item ? " → " + item.name : "");
+  const sub = document.createElement("div"); sub.className = "sub";
+  const add = (t, cls) => { const s = document.createElement("span"); if (cls) s.className = cls; s.textContent = t; sub.appendChild(s); };
+  if (f.date) add(fmtDate(f.date));
+  if (!item) add("General " + (CATS.find(c => c.id === f.category)?.label || "") + " fund");
+  if (f.notes) add(f.notes, "note");
+  const right = document.createElement("div"); right.className = "right";
+  right.innerHTML = `<span class="price num plus"></span><span class="pill cash">Funds</span>`;
+  right.querySelector(".price").textContent = "+" + money2(f.amount || 0);
+  if (canWrite && db) {
+    const acts = document.createElement("div"); acts.className = "acts";
+    const e = document.createElement("button"); e.type = "button"; e.className = "link-btn"; e.textContent = "Edit";
+    e.setAttribute("aria-label", "Edit funds from " + (f.donor || "Anonymous")); e.onclick = () => openFundPanel(f);
+    acts.appendChild(e); right.appendChild(acts);
+  }
+  row.append(name, right, sub);
+  return row;
+}
+
+$("g-cat").innerHTML = CATS.map(c => `<option value="${c.id}">${c.label}</option>`).join("");
+function fillItemOptions(cat, selected) {
+  const sel = $("g-item"); sel.innerHTML = "";
+  const none = document.createElement("option"); none.value = ""; none.textContent = "Whole category (general fund)"; sel.appendChild(none);
+  items.filter(i => i.category === cat).forEach(i => {
+    const o = document.createElement("option"); o.value = i.id; o.textContent = i.name; sel.appendChild(o);
+  });
+  sel.value = selected && items.some(i => i.id === selected && i.category === cat) ? selected : "";
+}
+$("g-cat").onchange = () => fillItemOptions($("g-cat").value, "");
+
+function openFundPanel(f) {
+  editingFundId = f ? f.id : null; confirmFundDel = false;
+  $("fpanel-title").textContent = f ? "Edit funds" : "Add funds";
+  $("g-amt").value = f?.amount ?? "";
+  const today = new Date(); const iso = new Date(today.getTime() - today.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+  $("g-date").value = f?.date || iso;
+  const cat = f?.category || (filter !== "all" ? filter : "tvs");
+  $("g-cat").value = cat; fillItemOptions(cat, f?.itemId || "");
+  $("g-donor").value = f?.donor || "";
+  $("g-notes").value = f?.notes || "";
+  $("g-err").textContent = "";
+  $("gdel-btn").hidden = !f; $("gdel-btn").textContent = "Delete"; $("gdel-btn").className = "btn ghost";
+  $("fpanel").hidden = false; $("scrim").hidden = false;
+  setTimeout(() => $("g-amt").focus(), 0);
+}
+function closeFundPanel() { $("fpanel").hidden = true; $("scrim").hidden = true; editingFundId = null; }
+$("fund-btn").onclick = () => openFundPanel(null);
+$("gcancel-btn").onclick = closeFundPanel;
+
+$("fform").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const amount = parseMoney($("g-amt").value.trim());
+  if (!amount) { $("g-err").textContent = "Enter the amount received, like 50."; return; }
+  const body = { amount, category: $("g-cat").value, itemId: $("g-item").value || null,
+    donor: $("g-donor").value.trim(), notes: $("g-notes").value.trim(), date: $("g-date").value || "" };
+  $("gsave-btn").disabled = true;
+  try {
+    if (editingFundId) {
+      const prev = funds.find(x => x.id === editingFundId);
+      await fcol.doc(editingFundId).set({ ...body, createdAt: prev?.createdAt || Date.now(), updatedAt: Date.now() });
+      toast("Saved"); schedulePublish();
+    } else {
+      await fcol.add({ ...body, createdAt: Date.now(), updatedAt: Date.now() });
+      toast(money2(amount) + " added to " + CATS.find(c => c.id === body.category).label); schedulePublish();
+    }
+    closeFundPanel();
+  } catch (err) {
+    if (err?.code === "invalid_argument") $("g-err").textContent = "You have view-only access. Ask the page owner to make you a Contributor.";
+    else if (err?.code === "quota_exceeded") $("g-err").textContent = "The tracker is full. Delete some old entries, then try again.";
+    else $("g-err").textContent = "Couldn't save just now. Check your connection and try again.";
+  } finally { $("gsave-btn").disabled = false; }
+});
+
+$("gdel-btn").onclick = async () => {
+  if (!editingFundId) return;
+  if (!confirmFundDel) { confirmFundDel = true; $("gdel-btn").textContent = "Tap again to delete"; $("gdel-btn").className = "btn danger"; return; }
+  try { await fcol.doc(editingFundId).delete(); toast("Deleted"); schedulePublish(); closeFundPanel(); }
+  catch (err) { $("g-err").textContent = "Couldn't delete just now. Try again."; }
+};
+
+// Pull a readable product name out of a store URL's slug
+const KEEP_CAPS = /^(\d+k|uhd|hd|led|oled|qled|tv|usa|xl|xxl|lg|tcl|rgb|usb)$/i;
+const SMALL = /^(with|and|for|of|the|a|to|in|on|or|ft|lb|oz)$/i;
+function nameFromLink(raw) {
+  let u; try { u = new URL(raw.trim()); } catch (e) { return ""; }
+  const segs = u.pathname.split("/").map(s => { try { return decodeURIComponent(s); } catch (e) { return s; } });
+  let best = "", bestWords = 0;
+  for (let s of segs) {
+    s = s.replace(/\.(html?|p|aspx|php)$/i, "");
+    const words = s.split(/[-_+]+/).filter(w => /[a-z]/i.test(w));
+    if (words.length >= 2 && words.length > bestWords) { best = s; bestWords = words.length; }
+  }
+  if (!best) return "";
+  let words = best.split(/[-_+]+/).filter(Boolean);
+  // drop trailing SKU-ish tokens (e.g. w003153419, 318420120, A-12345)
+  const last = () => words[words.length - 1];
+  while (words.length > 3 && ((/^(?=.*\d)[a-z]{0,3}\d\w*$/i.test(last()) && last().length > 4) || /^\d{3,}$/.test(last()))) words.pop();
+  return words.map((w, i) => {
+    if (KEEP_CAPS.test(w)) return w.toUpperCase();
+    if (i > 0 && SMALL.test(w)) return w.toLowerCase();
+    if (w === w.toUpperCase() && /[A-Z]/.test(w)) return w;
+    return w.charAt(0).toUpperCase() + w.slice(1).toLowerCase();
+  }).join(" ").replace(/\b(\d+) (\d) ft\b/g, "$1.$2 ft").replace(/\b(\d+) in\b/g, "$1 in.").replace(/\b(\d+) Inch\b/g, '$1"').slice(0, 140);
+}
+let autoName = "";
+function applyLink() {
+  const link = $("f-link").value.trim();
+  const hint = $("f-link-hint");
+  if (!link) { hint.textContent = ""; return; }
+  const n = nameFromLink(link);
+  const cur = $("f-name").value.trim();
+  if (n && (!cur || cur === autoName)) {
+    $("f-name").value = n; autoName = n;
+    hint.innerHTML = "<b>Name filled from link.</b> Check it, then enter the price from the product page.";
+    if (!$("f-est").value.trim()) $("f-est").focus();
+  } else if (!n) {
+    hint.textContent = "Couldn't read a product name from this link. Type the name and price in.";
+  } else hint.textContent = "";
+}
+$("f-link").addEventListener("change", applyLink);
+$("f-link").addEventListener("paste", () => setTimeout(applyLink, 0));
+
+function parseMoney(s) { const n = parseFloat(String(s).replace(/[$,\s]/g, "")); return isFinite(n) && n >= 0 ? n : null; }
+
+function openPanel(it) {
+  editingId = it ? it.id : null; confirmDel = false;
+  $("panel-title").textContent = it ? "Edit item" : "Add item";
+  $("f-name").value = it?.name || "";
+  $("f-cat").value = it?.category || (filter !== "all" ? filter : "tvs");
+  $("f-status").value = it?.status || "needed";
+  $("f-est").value = it?.est ?? "";
+  $("f-amt").value = it?.amount ?? "";
+  $("f-donor").value = it?.donor || "";
+  $("f-link").value = it?.link || "";
+  $("f-notes").value = it?.notes || "";
+  $("f-err").textContent = ""; $("f-link-hint").textContent = ""; autoName = "";
+  $("del-btn").hidden = !it; $("del-btn").textContent = "Delete"; $("del-btn").className = "btn ghost";
+  $("panel").hidden = false; $("scrim").hidden = false;
+  setTimeout(() => $("f-name").focus(), 0);
+}
+function closePanel() { $("panel").hidden = true; $("scrim").hidden = true; editingId = null; }
+$("add-btn").onclick = () => openPanel(null);
+$("cancel-btn").onclick = closePanel;
+$("scrim").onclick = () => { closePanel(); closeFundPanel(); };
+document.addEventListener("keydown", e => { if (e.key === "Escape") { if (!$("panel").hidden) closePanel(); if (!$("fpanel").hidden) closeFundPanel(); } });
+
+function toast(msg) { const t = $("toast"); t.textContent = msg; t.hidden = false; clearTimeout(toast._t); toast._t = setTimeout(() => t.hidden = true, 2400); }
+
+$("form").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const name = $("f-name").value.trim();
+  if (!name) { $("f-err").textContent = "Give the item a name."; return; }
+  const estRaw = $("f-est").value.trim(), amtRaw = $("f-amt").value.trim();
+  const est = estRaw ? parseMoney(estRaw) : 0;
+  const amount = amtRaw ? parseMoney(amtRaw) : null;
+  if (est === null || (amtRaw && amount === null)) { $("f-err").textContent = "Enter dollar amounts as numbers, like 599 or 42.06."; return; }
+  const status = $("f-status").value;
+  const link = $("f-link").value.trim();
+  if (link && !/^https?:\/\//i.test(link)) { $("f-err").textContent = "Links need to start with https://"; return; }
+  const body = { name, category: $("f-cat").value, status, est, amount: amount ?? null,
+    donor: $("f-donor").value.trim(), link, notes: $("f-notes").value.trim() };
+  $("save-btn").disabled = true;
+  try {
+    if (editingId) {
+      const prev = items.find(i => i.id === editingId);
+      await col.doc(editingId).set({ ...body, createdAt: prev?.createdAt || Date.now(), updatedAt: Date.now() });
+      toast("Saved"); schedulePublish();
+    } else {
+      await col.add({ ...body, createdAt: Date.now(), updatedAt: Date.now() });
+      toast("Added to " + CATS.find(c => c.id === body.category).label); schedulePublish();
+    }
+    closePanel();
+  } catch (err) {
+    if (err?.code === "invalid_argument") { $("f-err").textContent = "You have view-only access. Ask the page owner to make you a Contributor."; }
+    else if (err?.code === "quota_exceeded") { $("f-err").textContent = "The tracker is full. Delete some old items, then try again."; }
+    else { $("f-err").textContent = "Couldn't save just now. Check your connection and try again."; }
+  } finally { $("save-btn").disabled = false; }
+});
+
+$("del-btn").onclick = async () => {
+  if (!editingId) return;
+  if (!confirmDel) { confirmDel = true; $("del-btn").textContent = "Tap again to delete"; $("del-btn").className = "btn danger"; return; }
+  try { await col.doc(editingId).delete(); toast("Deleted"); schedulePublish(); closePanel(); }
+  catch (err) { $("f-err").textContent = "Couldn't delete just now. Try again."; }
+};
+
+// ---- Public snapshot: the latest list is baked into the page so anyone with the link sees it ----
+const MODE = "public";
+const TPL = null;
+const M_TPL = "__" + "TPL__", M_SNAP = "__" + "SNAPSHOT__";
+const HEAD = '<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px/1.4 system-ui,-apple-system,"Segoe UI",sans-serif}img{max-width:100%}[hidden]{display:none!important}</style></head><body>';
+const escJson = (v) => JSON.stringify(v).replace(/</g, "\\u003c");
+let snap = { items: [], funds: [], at: 0 };
+try { const t = $("snapshot").textContent.trim(); if (t && t !== M_SNAP) snap = JSON.parse(t); } catch (e) {}
+items = Array.isArray(snap.items) ? snap.items : [];
+funds = Array.isArray(snap.funds) ? snap.funds : [];
+const sig = (its, fs) => JSON.stringify([
+  [...its].sort((a, b) => a.id < b.id ? -1 : 1).map(({ updatedAt, ...r }) => r),
+  [...fs].sort((a, b) => a.id < b.id ? -1 : 1).map(({ updatedAt, ...r }) => r)]);
+let snapSig = sig(items, funds);
+function showUpdated() {
+  $("t-updated").textContent = snap.at ? "Updated " + new Date(snap.at).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }) : "";
+}
+
+let art = null, isEditor = false, pubTimer = null, pubBusy = false, itemsLive = false, fundsLive = false;
+function pubState() {
+  const el = $("pub-state");
+  if (!isEditor || !itemsLive || !fundsLive) { el.hidden = true; return; }
+  el.hidden = false;
+  if (pubTimer || pubBusy) { el.textContent = "Updating public view…"; return; }
+  if (sig(items, funds) === snapSig) { el.textContent = "Public view up to date"; return; }
+  el.innerHTML = "Public view is behind <button type=\"button\" class=\"link-btn\" id=\"pub-now\">Update it</button>";
+  $("pub-now").onclick = () => { clearTimeout(pubTimer); pubTimer = null; doPublish(); };
+}
+function schedulePublish() {
+  if (!isEditor) return;
+  clearTimeout(pubTimer);
+  pubTimer = setTimeout(() => { pubTimer = null; doPublish(); }, 4000);
+  pubState();
+}
+async function doPublish() {
+  if (!isEditor || pubBusy) return;
+  if (!$("panel").hidden || !$("fpanel").hidden) { pubTimer = setTimeout(() => { pubTimer = null; doPublish(); }, 3000); return; }
+  pubBusy = true; pubState();
+  const data = { items, funds, at: Date.now() };
+  const page = TPL.replace(M_TPL, () => escJson(TPL)).replace(M_SNAP, () => escJson(data));
+  try { await art.publish(HEAD + page + "</body></html>"); }
+  catch (err) {
+    const c = err && err.code;
+    if (c === "not_writer" || c === "not_granted" || c === "not_declared" || c === "capability_disabled" || c === "capability_removed" || c === "consent_required") isEditor = false;
+    else if (c !== "conflict") toast("Couldn't update the public view. Use “Update it” to try again.");
+  } finally { pubBusy = false; pubState(); }
+}
+
+if (MODE === "public") canWrite = false;
+if (MODE === "editor") { $("mode-tag").textContent = "Editor page"; $("mode-tag").hidden = false; }
+renderChips();
+if (MODE === "public") { render(); showUpdated(); }
+
+(async () => {
+  if (MODE === "public") return;
+  db = window.claude ? await window.claude.use("db") : null;
+  const user = window.claude ? await window.claude.use("user") : null;
+  if (MODE === "public") return;
+  if (!db) { const s = $("status"); if (s) s.textContent = "Sign in to claude.ai with an editor account to use this page."; return; } // signed-out or outside viewers: the baked-in list above is what they see
+  if (user) { const w = await user.can("data.write"); if (w === false) canWrite = false; }
+  $("add-btn").hidden = !canWrite; $("fund-btn").hidden = !canWrite;
+  try { art = window.claude ? await window.claude.use("artifact") : null; isEditor = !!(art && user && (await user.canEdit())); } catch (e) { isEditor = false; }
+  fcol = db.collection("funds");
+  fcol.onSnapshot(s => { funds = s.docs.map(d => ({ id: d.id, ...d.data() })); fundsLive = true; render(); pubState(); }, () => {});
+  col = db.collection("items");
+  col.onSnapshot(s => {
+    items = s.docs.map(d => ({ id: d.id, ...d.data() })); itemsLive = true;
+    render(); pubState();
+  }, err => {
+    $("sections").insertAdjacentHTML("afterbegin", '<p class="status-line">Live updates stopped. Reload the page to reconnect.</p>');
+  });
+})();
+</script>
+
+</body>
+</html>
